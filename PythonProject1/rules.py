@@ -9,7 +9,7 @@ class RulesScreen:  # класс для создания экрана с пра�
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("Правила игры")
 
-        # Цвета
+        # цвета
         self.colors = {
             'background': (240, 240, 250),
             'panel': (255, 255, 255, 200),
@@ -20,12 +20,12 @@ class RulesScreen:  # класс для создания экрана с пра�
             'button_hover': (70, 180, 70)
         }
 
-        # Шрифты
+        # шрифты
         self.fonts = {
             'title': pygame.font.Font(None, 52),
             'subtitle': pygame.font.Font(None, 44),
-            'normal': pygame.font.Font(None, 32),
-            'small': pygame.font.Font(None, 24)
+            'normal': pygame.font.Font(None, 26),
+            'small': pygame.font.Font(None, 22)
         }
 
     def show_rules(self):   # отображает экран с правилами и возвращает True, если игрок нажал Продолжить
@@ -51,20 +51,20 @@ class RulesScreen:  # класс для создания экрана с пра�
                         continue_game = True
                         running = False
 
-            # Отрисовка
+            # отрисовка
             self.screen.fill(self.colors['background'])
 
-            # Полупрозрачная панель для правил
+            # полупрозрачная панель для правил
             rules_panel = pygame.Surface((700, 520), pygame.SRCALPHA)
             pygame.draw.rect(rules_panel, self.colors['panel'], (0, 0, 700, 520), 0, 15)    # rect рисует прямоугольник
             pygame.draw.rect(rules_panel, self.colors['border'], (0, 0, 700, 520), 2, 15)
             self.screen.blit(rules_panel, (self.width // 2 - 350, 50))  # blit выводит на экран
 
-            # Заголовок
+            # заголовок
             title = self.fonts['title'].render("Правила игры", True, self.colors['title'])
             self.screen.blit(title, (self.width // 2 - title.get_width() // 2, 70))
 
-            # Текст правил
+            # текст правил
             rules = [
                 "Цель игры: собрать как можно больше монет за 60 секунд!",
                 "",
@@ -75,7 +75,7 @@ class RulesScreen:  # класс для создания экрана с пра�
                 "• Красные: -20 очков (опасные!)",
                 "",
                 "Управление: стрелки клавиатуры",
-                "Для победы нужно набрать минимум 1000 очков!"
+                "Для победы нужно, уворачиваясь от врагов, набрать минимум 1000 очков!"
             ]
 
             for i, line in enumerate(rules):    # вывод правил разными шрифтами, перебирая элементы и их индексы
@@ -85,7 +85,7 @@ class RulesScreen:  # класс для создания экрана с пра�
                     text = self.fonts['normal'].render(line, True, self.colors['text'])
                 self.screen.blit(text, (self.width // 2 - 330, 150 + i * 35))
 
-            # Кнопка Продолжить
+            # кнопка Продолжить
             button_color = self.colors['button_hover'] if button_hover else self.colors['button']
             pygame.draw.rect(self.screen, button_color, button_rect, 0, 10)
             pygame.draw.rect(self.screen, (0, 0, 0), button_rect, 2, 10)

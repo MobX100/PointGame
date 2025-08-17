@@ -1,11 +1,13 @@
 import pygame   # импорт библиотек
 import sys
+import math
 import random
 from player import Player
 from rules import RulesScreen
 from coin import StandardCoin, BigCoin, MegaCoin, BadCoin
 from inputScreen import InputScreen
 from dataBase import Database
+from enemy import Enemy
 
 
 class Game: # основной класс, отвечающий за игру
@@ -17,6 +19,8 @@ class Game: # основной класс, отвечающий за игру
         pygame.display.set_caption("ALL In: 60 Seconds") # задаем название игре
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
+        self.enemies = [Enemy(self.screen_width, self.screen_height) for _ in range(5)]  # 2 врага
+        self.game_over = False
 
         # игровые параметры
         self.game_time = 60    # время
@@ -38,9 +42,9 @@ class Game: # основной класс, отвечающий за игру
             sys.exit()
 
         self.player = Player(player_name)    # получаем имя игрока из player.py
-        self.spawn_coins(10)  # Начальное количество монеток
+        self.spawn_coins(10)  # начальное количество монеток
 
-        # Таймер
+        # таймер
         self.start_time = pygame.time.get_ticks()
         self.time_left = self.game_time
         self.game_active = True
@@ -140,12 +144,16 @@ class Game: # основной класс, отвечающий за игру
         while waiting:
             for event in pygame.event.get():    # отработка ивентов (событий)
                 if event.type == pygame.QUIT:   # выход
-                    return False
+                    pygame.quit()
+                    sys.exit()
                 if event.type == pygame.KEYDOWN:   # нажата клавиша
                     if event.key == pygame.K_r:   # нажата R
                         return True
                     elif event.key == pygame.K_q:   # нажата Q
-                        return False
+                        pygame.quit()
+                        sys.exit()
+            self.clock.tick(60)  # ограничиваем FPS
+
         return False
 
     def run(self):
@@ -156,7 +164,32 @@ class Game: # основной класс, отвечающий за игру
                 if event.type == pygame.QUIT:   # выход
                     running = False
 
-            if self.game_active:
+            if self.game_active and not self.game_over:
+                # обновляем неуязвимость игрока
+                self.player.update_invincibility()
+
+                # движение врагов
+                for enemy in self.enemies:
+                    enemy.move()
+
+                    # проверка столкновений (только если игрок не неуязвим)
+                    if not self.player.invincible and self.player.get_rect().colliderect(enemy.get_rect()):
+                        if self.player.take_damage():
+                            self.game_over = True
+                            self.game_active = False
+                            # Показываем экран завершения игры
+                            if self.show_game_over(False):
+                                # Рестарт игры
+                                return True
+                            else:
+                                return False
+
+                        # отталкивание игрока
+                        push_direction = math.atan2(self.player.y - enemy.y,
+                                                    self.player.x - enemy.x)
+                        self.player.x += math.cos(push_direction) * 30
+                        self.player.y += math.sin(push_direction) * 30
+
                 # управление
                 keys = pygame.key.get_pressed()
                 dx, dy = 0, 0
@@ -182,25 +215,29 @@ class Game: # основной класс, отвечающий за игру
 
                     if self.show_game_over(won):
                         # рестарт игры
-                        self.__init__()
+                        return True
                     else:
-                        running = False
+                        return False
 
-                # отрисовка
-                pygame.display.set_caption("ALL In: 60 Seconds")
-                icon = pygame.image.load('assetStore/icon.png')
-                pygame.display.set_icon(icon)
-                self.screen.fill((66, 170, 255))
+            # отрисовка
+            pygame.display.set_caption("ALL In: 60 Seconds")
+            icon = pygame.image.load('assetStore/icon.png')
+            pygame.display.set_icon(icon)
+            self.screen.fill((66, 170, 255))
 
-                # рисуем монетки
-                for coin in self.coins:
-                    coin.draw(self.screen)
+            # рисуем монетки
+            for coin in self.coins:
+                coin.draw(self.screen)
 
-                # рисуем игрока
-                self.player.draw(self.screen)
+            # рисуем врагов
+            for enemy in self.enemies:
+                enemy.draw(self.screen)
 
-                # отображаем информацию
-                self.show_game_info()
+            # рисуем игрока
+            self.player.draw(self.screen)
+
+            # отображаем информацию
+            self.show_game_info()
 
             pygame.display.flip()
             self.clock.tick(60) # количество кадров/с
@@ -209,5 +246,8 @@ class Game: # основной класс, отвечающий за игру
 
 
 if __name__ == "__main__":
-    game = Game()
-    game.run()
+    while True:
+        game = Game()
+        should_restart = game.run()
+        if not should_restart:
+            break
